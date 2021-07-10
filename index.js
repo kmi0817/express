@@ -23,6 +23,10 @@ function HTML(body, func) {
             <meta charset='utf-8'>
             <link rel="stylesheet" href="http://cdn.webix.com/edge/webix.css" type="text/css">
             <script src="//cdn.webix.com/edge/webix.js" type="text/javascript"></script>
+        
+            <style>
+                a {text-decoration: none; color: #1CA1C1}
+            </style>
         </head>
         <body>
         <script type='text/javascript' charset='utf-8'>
@@ -72,7 +76,7 @@ function LIST(movielist) {
     return list;
 }
 
-function TABLE(title, director, release_date, description) {
+function MOVIE_TABLE(title, director, release_date, description) {
     const table = `
     rows: [
         {
@@ -96,7 +100,7 @@ function TABLE(title, director, release_date, description) {
         },
         {
             view: 'toolbar', elements: [
-                {view: 'button', value: '뒤로 가기', autowidth: true},
+                {view: 'button', value: '<a href="javascript:history.back()">뒤로 가기</a>', autowidth: true},
                 {view: 'button', value: '수정', autowidth: true},
                 {view: 'button', value: '삭제', autowidth: true}
             ]
@@ -117,7 +121,7 @@ server.get('/', (req, res) => {
                 {${list}},
                 {
                     view: 'toolbar', elements: [
-                        {view: 'button', value: '추가'}
+                        {view: 'button', value: '<a href="/create">추가</a>'}
                     ]
                 }
             ]
@@ -135,7 +139,7 @@ server.get('/movies/:id', (req, res) => {
     fs.readFile(`movies/${id}`, 'utf8', (err, movie) => {
         movie = JSON.parse(movie);
 
-        const body = TABLE(movie.title, movie.director, movie.release_date, movie.description);
+        const body = MOVIE_TABLE(movie.title, movie.director, movie.release_date, movie.description);
 
         var template = HTML(body, '');
 
@@ -145,10 +149,29 @@ server.get('/movies/:id', (req, res) => {
 
 server.get('/create', (req, res) => {
     const body = `
-    template:"<button onclick='history.back()'>Back</button>", id:"details"
+    view: 'form', id: 'form', elements: [
+        {view: 'text', label: '제목'},
+        {
+            cols: [
+                {view: 'text', label: '감독'},
+                {view: 'text', label: '개봉년도'}
+            ]
+        },
+        {view: 'textarea', label: '내용'},
+        {
+            cols: [
+                {view: 'button', value: '<a href="javascript:history.back()">뒤로 가기</a>'},
+                {view: 'button', value: '완성'}
+            ]
+        }
+    ]
     `;
     const template = HTML(body, '');
     res.send(template);
+});
+
+server.post('/create_process', (req, res) => {
+
 });
 
 server.listen(PORT, () => {
