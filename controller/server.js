@@ -87,17 +87,23 @@ function MOVIE_TABLE(id, title, director, release_date, description) {
             template: "${description}", minHeight: 200, autoheight: true
         },
         {
-            view: 'toolbar', elements: [
-                {view: 'button', value: '<a href="javascript:history.back()">뒤로 가기</a>', autowidth: true},
-                {view: 'button', value: '수정', autowidth: true},
-                {view: 'button', value: '삭제', autowidth: true, click: function() {
-                    webix.confirm("삭제하시겠습니까?", "confirm-warning")
+            view: 'toolbar',
+            elements: [
+                {view: 'button', value: '<a href="/">목록</a>', autowidth: true},
+                {
+                    view: 'button', value: '<a href="/edit/${id}">수정</a>', autowidth: true,
+                },
+                {
+                    view: 'button', value: '삭제', autowidth: true,
+                    click: function() {
+                        webix.confirm("삭제하시겠습니까?", "confirm-warning")
                         .then((result) => {
                             webix.ajax().post('/delete_process', {id: "${id}"})
                             .then((result) => { location.href='/'; })
                             .fail(() => { webix.message('삭제하는 데 문제가 발생했습니다.')});
                         });
-                }}
+                    }
+                }
             ]
         }
     ]
@@ -117,12 +123,12 @@ export const getIndex = (req, res) => {
                 {${list}},
                 {
                     view: 'toolbar', elements: [
-                        {view: 'button', value: '<a href="/create">추가</a>'}
+                        {view: 'button', value: '<a href="/edit">추가</a>'}
                     ]
                 }
             ]
             `;
-            const template = HTML(body, '');
+            const template = HTML(body, ''); // no function part
 
             res.send(template);
         }
@@ -130,28 +136,38 @@ export const getIndex = (req, res) => {
 }
 
 export const getMovie = (req, res) => {
-    const id = req.params.id;
+    const id = req.params.id; // 파라미터로 온 영화 id 값
 
-    fs.readFile(`movies/${id}`, 'utf8', (err, movie) => {
-        movie = JSON.parse(movie);
+    if (id) {
+        fs.readFile(`movies/${id}`, 'utf8', (err, movie) => {
+            movie = JSON.parse(movie);
 
-        const body = MOVIE_TABLE(movie.id, movie.title, movie.director, movie.release_date, movie.description);
+            const body = MOVIE_TABLE(movie.id, movie.title, movie.director, movie.release_date, movie.description);
 
-        var template = HTML(body, '');
+            var template = HTML(body, ''); // no function part
 
-        res.send(template);
-    });
+            res.send(template);
+        });
+    } else {
+        webix.message("영화가 존재하지 않습니다.");
+        location.href='/';
+    }
 }
 
 export const deleteMovie = (req, res) => {
     const id = req.body.id;
 
-    fs.unlink(`movies/${id}`, (err) => {
-        if (err) throw err;
-        else {
-            res.redirect('/');
-        }
-    });
+    if (id) {
+        fs.unlink(`movies/${id}`, (err) => {
+            if (err) throw err;
+            else {
+                res.redirect('/');
+            }
+        });
+    } else {
+        webix.message("해당하는 영화가 없습니다.");
+        location.href='/';
+    }
     /* 1. 삭제 버튼 누르는 곳에서
         webix.ajax().post('/delete_process', {id: "${id}"})
                             .then((result) => { location.href='/' })
@@ -161,43 +177,117 @@ export const deleteMovie = (req, res) => {
             둘 중에 하나가 없으면 계속 index 페이지로 이동 안 함
 
         3. http method 중 webix에서 delete 사용할 수 있는 것처럼 보이지만, 구현해 보니 오류가 남. 내가 잘못 구현한 걸 수도. (https://docs.webix.com/helpers__ajax_operations.html#promiseapiforajaxrequests)
-        */
-}
 
-export const createView = (req, res) => {
-    const body = `
-    rows: [
-        {
-            view: 'form', id: 'myForm', elements: [
-                {view: 'text', id: 'title', label: '제목'},
-                {
-                    cols: [
-                        {view: 'text', id: 'director', label: '감독'},
-                        {view: 'text', id: 'release_date', label: '개봉년도'}
-                    ]
-                },
-                {view: 'textarea', id: 'description', label: '내용'}
-            ]
-        },
-        {
-            view: 'toolbar', elements: [
-                {view: 'button', value: '<a href="javascript:history.back()">뒤로 가기</a>'},
-                {view: 'button', value: '완성', click: submitBtn}
-            ]
-        }
-    ]
-    `;
-
-    const func = `
-    function submitBtn() {
-        alert('왜 안 되지...');
-        location.href='/';
-    }
-    `;
-    const template = HTML(body, func);
-    res.send(template);
+        4. 근데 res.redirect('/'); 가 실제 페이지 이동시키는 듯!
+    */
 }
 
 export const createMovie = (req, res) => {
+    const movie = req.body;
+    const json = JSON.stringify(movie, null, 2);
 
+    fs.writeFile(`movies/${movie.id}`, `${json}`, 'utf8', (err) => {
+        if (err) throw err;
+        else {
+            console.log(`${movie.id} has saved!`);
+            res.redirect(`/movies/${movie.id}`);
+        }
+    });
+}
+
+export const editView = (req, res) => {
+    const id = req.params.id;
+
+    if (id) { /* 기존에 등록된 영화 수정 */
+
+        /* id에 해당하는 영화 데이터 가져와서 각 input의 value 값으로 설정한다. */
+        fs.readFile(`movies/${id}`, 'utf8', (err, movie) => {
+            movie = JSON.parse(movie);
+
+            const body = `
+            rows: [
+                {
+                    view: 'form', id: 'myForm', elements: [
+                        {view: 'text', name: 'title', label: '제목', value: '${movie.title}'},
+                        {
+                            cols: [
+                                {view: 'text', name: 'director', label: '감독', value: '${movie.director}'},
+                                {view: 'text', name: 'release_date', label: '개봉년도', value: '${movie.release_date}'}
+                            ]
+                        },
+                        {view: 'textarea', name: 'description', label: '내용', value: '${movie.description}'}
+                    ]
+                },
+                {
+                    view: 'toolbar', elements: [
+                        {view: 'button', value: '<a href="javascript:history.back()">뒤로 가기</a>'},
+                        {view: 'button', value: '완성', click: submitBtn}
+                    ]
+                }
+            ]
+            `;
+        
+            const func = `
+            function submitBtn() {
+                var myForm = $$("myForm");
+                var items = myForm.getValues();
+
+                webix.ajax().post('/create_process',
+                    {
+                        id: "${movie.id}",
+                        title: items.title,
+                        description: items.description,
+                        director: items.director,
+                        release_date: items.release_date
+                    }).then(() => { location.href='/movies/${movie.id}'; });
+            }
+            `;
+            
+            const template = HTML(body, func);
+            res.send(template);
+        });
+    } else { /* 새 영화 추가 */
+        const body = `
+        rows: [
+            {
+                view: 'form', id: 'myForm', elements: [
+                    {view: 'text', name: 'title', label: '제목'},
+                    {
+                        cols: [
+                            {view: 'text', name: 'director', label: '감독'},
+                            {view: 'text', name: 'release_date', label: '개봉년도'}
+                        ]
+                    },
+                    {view: 'textarea', name: 'description', label: '내용'}
+                ]
+            },
+            {
+                view: 'toolbar', elements: [
+                    {view: 'button', value: '<a href="javascript:history.back()">뒤로 가기</a>'},
+                    {view: 'button', value: '완성', click: submitBtn}
+                ]
+            }
+        ]
+        `;
+    
+        const created_id = uuidv4(); // 새 영화의 id 생성
+        const func = `
+        function submitBtn() {
+            var myForm = $$("myForm");
+            var items = myForm.getValues();
+
+            webix.ajax().post('/create_process',
+                {
+                    id: "${created_id}",
+                    title: items.title,
+                    description: items.description,
+                    director: items.director,
+                    release_date: items.release_date
+                }).then(() => { location.href='/movies/${created_id}'; });
+        }
+        `;
+        
+        const template = HTML(body, func);
+        res.send(template);
+    }
 }
