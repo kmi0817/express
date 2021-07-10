@@ -24,7 +24,11 @@ function HTML(body, func) {
                         {
                             cols: [
                                 {
-                                    view: 'button', value: '<a href="/">index</a>'
+                                    view: 'button',
+                                    value: 'index',
+                                    click: function() {
+                                        location.href='/';
+                                    }
                                 },
                                 {template: 'searchBox'},
                                 {template: 'menu1'},
@@ -91,12 +95,26 @@ function MOVIE_TABLE(id, title, director, release_date, description) {
         {
             view: 'toolbar',
             elements: [
-                {view: 'button', value: '<a href="/">목록</a>', autowidth: true},
                 {
-                    view: 'button', value: '<a href="/edit/${id}">수정</a>', autowidth: true,
+                    view: 'button',
+                    value: '목록',
+                    autowidth: true,
+                    click: function() {
+                        location.href='/';
+                    }
                 },
                 {
-                    view: 'button', value: '삭제', autowidth: true,
+                    view: 'button',
+                    value: '수정',
+                    autowidth: true,
+                    click: function() {
+                        location.href='/edit/${id}';
+                    }
+                },
+                {
+                    view: 'button',
+                    value: '삭제',
+                    autowidth: true,
                     click: function() {
                         webix.confirm("삭제하시겠습니까?", "confirm-warning")
                         .then((result) => {
@@ -126,7 +144,12 @@ export const getIndex = (req, res) => {
                 {${list}},
                 {
                     view: 'toolbar', elements: [
-                        {view: 'button', value: '<a href="/edit">추가</a>'}
+                        {
+                            view: 'button', value: '추가',
+                            click: function() {
+                                location.href='/edit';
+                            }
+                        }
                     ]
                 }
             ]
@@ -201,8 +224,8 @@ export const editMovie = (req, res) => {
 export const editView = (req, res) => {
     const id = req.params.id;
 
-    if (id) { /* 기존에 등록된 영화 수정 */
-
+     /* 기존에 등록된 영화 수정 */
+    if (id) {
         /* id에 해당하는 영화 데이터 가져와서 각 input의 value 값으로 설정한다. */
         fs.readFile(`movies/${id}`, 'utf8', (err, movie) => {
             movie = JSON.parse(movie);
@@ -230,7 +253,13 @@ export const editView = (req, res) => {
                                 $$('myForm').clear();
                             }
                         },
-                        {view: 'button', value: '<a href="javascript:history.back()">뒤로 가기</a>'}
+                        {
+                            view: 'button',
+                            value: '뒤로 가기',
+                            click: function() {
+                                history.back();
+                            }
+                        }
                     ]
                 }
             ]
@@ -255,7 +284,11 @@ export const editView = (req, res) => {
             const template = HTML(body, func);
             res.send(template);
         });
-    } else { /* 새 영화 추가 */
+    }
+    
+    
+    /* 새 영화 추가 */
+    else {
         const body = `
         rows: [
             {
@@ -279,7 +312,13 @@ export const editView = (req, res) => {
                             $$('myForm').clear();
                         }
                     },
-                    {view: 'button', value: '<a href="javascript:history.back()">뒤로 가기</a>'}
+                    {
+                        view: 'button',
+                        value: '뒤로 가기',
+                        click: function() {
+                            history.back();
+                        }
+                    }
                 ]
             }
         ]
