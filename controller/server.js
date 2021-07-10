@@ -23,7 +23,9 @@ function HTML(body, func) {
                     rows: [
                         {
                             cols: [
-                                {template: 'icon'},
+                                {
+                                    view: 'button', value: '<a href="/">index</a>'
+                                },
                                 {template: 'searchBox'},
                                 {template: 'menu1'},
                                 {template: 'menu2'},
@@ -109,6 +111,7 @@ function MOVIE_TABLE(id, title, director, release_date, description) {
     ]
     `;
 
+    /* confirm documentation: https://docs.webix.com/api___confirm.html */
     return table
 }
 
@@ -220,8 +223,14 @@ export const editView = (req, res) => {
                 },
                 {
                     view: 'toolbar', elements: [
-                        {view: 'button', value: '<a href="javascript:history.back()">뒤로 가기</a>'},
-                        {view: 'button', value: '완성', click: submitBtn}
+                        {view: 'button', value: '완성', click: submitBtn},
+                        {
+                            view: 'button', value: "다시 작성",
+                            click: function() {
+                                $$('myForm').clear();
+                            }
+                        },
+                        {view: 'button', value: '<a href="javascript:history.back()">뒤로 가기</a>'}
                     ]
                 }
             ]
@@ -263,8 +272,14 @@ export const editView = (req, res) => {
             },
             {
                 view: 'toolbar', elements: [
-                    {view: 'button', value: '<a href="javascript:history.back()">뒤로 가기</a>'},
-                    {view: 'button', value: '완성', click: submitBtn}
+                    {view: 'button', value: '완성', click: submitBtn},
+                    {
+                        view: 'button', value: "다시 작성",
+                        click: function() {
+                            $$('myForm').clear();
+                        }
+                    },
+                    {view: 'button', value: '<a href="javascript:history.back()">뒤로 가기</a>'}
                 ]
             }
         ]
