@@ -182,7 +182,7 @@ export const deleteMovie = (req, res) => {
     */
 }
 
-export const createMovie = (req, res) => {
+export const editMovie = (req, res) => {
     const movie = req.body;
     const json = JSON.stringify(movie, null, 2);
 
@@ -232,7 +232,7 @@ export const editView = (req, res) => {
                 var myForm = $$("myForm");
                 var items = myForm.getValues();
 
-                webix.ajax().post('/create_process',
+                webix.ajax().post('/edit_process',
                     {
                         id: "${movie.id}",
                         title: items.title,
@@ -276,7 +276,7 @@ export const editView = (req, res) => {
             var myForm = $$("myForm");
             var items = myForm.getValues();
 
-            webix.ajax().post('/create_process',
+            webix.ajax().post('/edit_process',
                 {
                     id: "${created_id}",
                     title: items.title,

@@ -1,7 +1,7 @@
 import express from 'express';
 import bodyParser from 'body-parser';
 
-import { deleteMovie, getIndex, getMovie, createMovie, editView } from './controller/server.js';
+import { deleteMovie, getIndex, getMovie, editMovie, editView } from './controller/server.js';
 
 const server = express(); // express server 생성
 const PORT = 3000;
@@ -19,7 +19,7 @@ server.post('/delete_process', deleteMovie);
 
 server.get('/edit', editView);
 
-server.post('/create_process', createMovie);
+server.post('/edit_process', editMovie);
 
 server.get('/edit/:id', editView);
 
