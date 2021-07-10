@@ -2,6 +2,8 @@ import express from 'express';
 import bodyParser from 'body-parser';
 import { v4 as uuidv4 } from 'uuid';
 
+import remote from 'webix-remote';
+
 import fs from 'fs';
 
 const server = express(); // express server 생성
@@ -11,32 +13,6 @@ server.use(bodyParser.urlencoded({extended:true}));
 // 이게 없으면 클라이언트에서 POST로 넘기는 값이 모두 undefined로 나온다.
 // 해결 방법 출처: https://meyouus.tistory.com/68
 server.use(bodyParser.json()); // server에선 모두 JSON 데이터를 사용한다는 의미이다.
-
-// let template = {
-//     HTML:function(body) {
-//         return `
-//         <!doctype HTML>
-//         <html>
-//             <head>
-//                 <title>TEST</title>
-//                 <meta charset='utf-8'>
-//             </head>
-//             <body>
-//                 ${body}
-//             </body>
-//         </html>
-//         `;
-//     },
-//     LIST:function(movielist) {
-//         var list = '<ul>';
-//         movielist.forEach((movie) => {
-//             list += `<li><a href='/Ghibli/${movie}'>${movie}</a></li>`;
-//         });
-//         list += '</ul>';
-
-//         return list;
-//     }
-// }
 
 function HTML(body, func) {
     return `
@@ -87,61 +63,89 @@ function LIST(movielist) {
     for (var i = 0; i < movielist.length; i++)
         movie_list.push({id: movielist[i]});
     movie_list = JSON.stringify(movie_list); // 이게 없으면 [object Object]로 인식
-
+    
     const list = `
-    view: 'list', id: 'list', select: true, data: ${movie_list}, template: "#id#",
-    click: function() {
-        var list = $$('list');
-        var movie_id = list.getSelectedId();
-    }
+    view: 'list', id: 'list', select: true, data: ${movie_list},
+    template: "<a href='movies/#id#'>#id#</a>"
     `;
 
     return list;
 }
 
+function TABLE(title, director, release_date, description) {
+    const table = `
+    rows: [
+        {
+            height: 35,
+            cols: [
+                {template: "제목"},
+                {template: "${title}"}
+            ]
+        },
+        {
+            height: 35,
+            cols: [
+                {template: "감독"},
+                {template: "${director}"},
+                {template: "개봉년도"},
+                {template: "${release_date}"}
+            ]
+        },
+        {
+            template: "${description}", minHeight: 200, autoheight: true
+        },
+        {
+            view: 'toolbar', elements: [
+                {view: 'button', value: '뒤로 가기', autowidth: true},
+                {view: 'button', value: '수정', autowidth: true},
+                {view: 'button', value: '삭제', autowidth: true}
+            ]
+        }
+    ]
+    `;
+
+    return table
+}
 server.get('/', (req, res) => {
-    fs.readdir('movies', 'utf8', (err, movielist) => {
+    fs.readdir('movies', (err, movielist) => {
         if (err) throw err;
         else {
             const list = LIST(movielist);
-            const func = `
-
+            
+            const body = `
+            rows: [
+                {${list}},
+                {
+                    view: 'toolbar', elements: [
+                        {view: 'button', value: '추가'}
+                    ]
+                }
+            ]
             `;
-            const template = HTML(list, func);
+            const template = HTML(body, '');
 
             res.send(template);
         }
     });
 });
 
+server.get('/movies/:id', (req, res) => {
+    const id = req.params.id;
+
+    fs.readFile(`movies/${id}`, 'utf8', (err, movie) => {
+        movie = JSON.parse(movie);
+
+        const body = TABLE(movie.title, movie.director, movie.release_date, movie.description);
+
+        var template = HTML(body, '');
+
+        res.send(template);
+    });
+});
+
 server.get('/create', (req, res) => {
     const body = `
-    <script type='text/javascript' charset='utf-8'>
-        webix.ready(function() {
-            webix.ui({
-                type: 'space',
-                rows: [
-                    {
-                        cols: [
-                            {template: 'icon'},
-                            {template: 'searchBox'},
-                            {template: 'menu1'},
-                            {template: 'menu2'},
-                            {template: 'menu3'},
-                            {template: 'menu4'},
-                        ],
-                        height: 60
-                    },
-                    {
-                        template: 'container'
-                    },
-                    {
-                        template: 'footer', height: 50
-                    }
-                ]
-            });
-        });
-    </script>
+    template:"<button onclick='history.back()'>Back</button>", id:"details"
     `;
     const template = HTML(body, '');
     res.send(template);
