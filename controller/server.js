@@ -55,19 +55,91 @@ function HTML(body, func) {
 }
 
 function LIST(movielist) {
-    // movielist 를 JSON 형태로 바꾼다. ex) {id: "1233..."}
-    let movie_list = []
-    for (var i = 0; i <movielist.length; i++)
-        movie_list.push({id: movielist[i]});
-    
-    movie_list = JSON.stringify(movie_list); // 이게 없으면 [object Object]로 인식
-    
-    const list = `
-    view: 'list', id: 'list', select: true, data: ${movie_list},
-    template: "<a href='movies/#id#'>#id#</a>"
-    `;
+    // console.log(movielist);
+    var result;
+    make_CONTAINER(movielist)
+        .catch((err) => console.log(err)) // 예외 처리
+        .then(ret => {
+            // console.log('done');
+            console.log(ret);
+            result = ret;
+        });
+    return result;
+}
 
-    return list;
+/* async, await reference: https://zellwk.com/blog/async-await/ */
+/* async, await in LOOP reference: https://zellwk.com/blog/async-await-in-loops/ */
+
+const mapLoop = async (movielist) => {
+    // console.log('start - movielist');
+
+    const promises = await movielist.map(async (movie_id) => {
+        const container_elemnt = await CONTAINER2(movie_id);
+        return container_elemnt;
+    });
+
+    const containers = await Promise.all(promises);
+    // console.log(`mapLoop: ${containers}`);
+    // console.log('end - movielist');
+    return containers;
+}
+
+const sleep = ms => {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+const make_CONTAINER = async (movielist) => {
+    try {
+        const promises = [ CONTAINER1(), mapLoop(movielist), CONTAINER3() ]
+        const [con1, con2, con3] = await Promise.all(promises);
+        // console.log(con1);
+        // console.log(con2);
+        // console.log(con3);
+
+        const result = con1 + con2 + con3;
+        return result;
+    } catch (err) {
+        console.log('err');
+    }
+}
+const CONTAINER1 = async (ret = true) => {
+    if (ret) {
+        // console.log('1');
+        return sleep(1000).then(res => 'rows: [');
+    }
+    else { throw new Error('Error1'); }
+}
+
+const CONTAINER3 = async (ret = true) => {
+    if (ret) {
+        // console.log('3');
+        return sleep(1000).then(res => ']');
+    }
+    else { throw new Error('Error3'); }
+}
+
+const CONTAINER2 = async (id) => {
+    // console.log(`2 - ${id}`);
+    var movie = fs.readFileSync(`movies/${id}`, 'utf8');
+    movie = JSON.parse(movie);
+    
+    const desc = movie.description.substr(0, 100);
+    var container = `
+    {
+        cols: [
+            {template: "사진", maxWidth: 250},
+            {
+                rows: [
+                    {template: "${movie.title}", height: 50},
+                    {template: "작성자/작성날짜", height: 30},
+                    {template: "${desc}", height: 100}
+                ]
+            }
+        ]
+    }
+    `;
+    // console.log(`2 -> ${container}`);
+    return sleep(1000).then(res => container);
 }
 
 function MOVIE_TABLE(id, title, director, release_date, description) {
@@ -138,7 +210,7 @@ export const getIndex = (req, res) => {
         if (err) throw err;
         else {
             const list = LIST(movielist);
-            
+            console.log(list);
             const body = `
             rows: [
                 {${list}},
