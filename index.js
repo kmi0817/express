@@ -2,7 +2,8 @@ import express from 'express';
 import bodyParser from 'body-parser';
 import { v4 as uuidv4 } from 'uuid';
 
-import remote from 'webix-remote';
+
+import { deleteMovie, getIndex, getMovie, createView, createMovie } from './controller/server.js';
 
 import fs from 'fs';
 
@@ -118,99 +119,17 @@ function MOVIE_TABLE(id, title, director, release_date, description) {
 
     return table
 }
-server.get('/', (req, res) => {
-    fs.readdir('movies', (err, movielist) => {
-        if (err) throw err;
-        else {
-            const list = LIST(movielist);
-            
-            const body = `
-            rows: [
-                {${list}},
-                {
-                    view: 'toolbar', elements: [
-                        {view: 'button', value: '<a href="/create">추가</a>'}
-                    ]
-                }
-            ]
-            `;
-            const template = HTML(body, '');
 
-            res.send(template);
-        }
-    });
-});
 
-server.get('/movies/:id', (req, res) => {
-    const id = req.params.id;
+server.get('/', getIndex);
 
-    fs.readFile(`movies/${id}`, 'utf8', (err, movie) => {
-        movie = JSON.parse(movie);
+server.get('/movies/:id', getMovie);
 
-        const body = MOVIE_TABLE(movie.id, movie.title, movie.director, movie.release_date, movie.description);
+server.post('/delete_process', deleteMovie);
 
-        var template = HTML(body, '');
+server.get('/create', createView);
 
-        res.send(template);
-    });
-});
-
-server.get('/create', (req, res) => {
-    const body = `
-    rows: [
-        {
-            view: 'form', id: 'myForm', elements: [
-                {view: 'text', id: 'title', label: '제목'},
-                {
-                    cols: [
-                        {view: 'text', id: 'director', label: '감독'},
-                        {view: 'text', id: 'release_date', label: '개봉년도'}
-                    ]
-                },
-                {view: 'textarea', id: 'description', label: '내용'}
-            ]
-        },
-        {
-            view: 'toolbar', elements: [
-                {view: 'button', value: '<a href="javascript:history.back()">뒤로 가기</a>'},
-                {view: 'button', value: '완성', click: submitBtn}
-            ]
-        }
-    ]
-    `;
-
-    const func = `
-    function submitBtn() {
-        alert('왜 안 되지...');
-        location.href='/';
-    }
-    `;
-    const template = HTML(body, func);
-    res.send(template);
-});
-
-server.post('/create_process', (req, res) => {
-
-});
-
-server.post('/delete_process', (req, res) => {
-    const id = req.body.id;
-
-    fs.unlink(`movies/${id}`, (err) => {
-        if (err) throw err;
-        else {
-            res.redirect('/');
-        }
-    });
-    /* 1. 삭제 버튼 누르는 곳에서
-        webix.ajax().post('/delete_process', {id: "${id}"})
-                            .then((result) => { location.href='/' })
-        으로 index 페이지로 이동하는 걸 구현함
-        
-        2. 근데 location.href='/' 와 res.direct('/'); 둘 다 있어야 하나 봄.
-            둘 중에 하나가 없으면 계속 index 페이지로 이동 안 함
-        */
-});
+server.post('/create_process', createMovie);
 
 server.listen(PORT, () => {
     console.log(`localhost:${PORT} runs`);
