@@ -107,7 +107,7 @@ function MOVIE_TABLE(id, title, director, release_date, description) {
                     webix.confirm("삭제하시겠습니까?", "confirm-warning")
                         .then((result) => {
                             webix.ajax().post('/delete_process', {id: "${id}"})
-                            .then((result) => { location.href='/'; })
+                            .then((result) => { location.href='/' })
                             .fail(() => { webix.message('삭제하는 데 문제가 발생했습니다.')});
                         });
                 }}
@@ -199,17 +199,18 @@ server.post('/delete_process', (req, res) => {
     fs.unlink(`movies/${id}`, (err) => {
         if (err) throw err;
         else {
-            res.redirect('/');
+            console.log(`${id} has been deleted`);
         }
     });
-    /* 1. 삭제 버튼 누르는 곳에서
+    // res.redirect('/');
+    /* 삭제 버튼 누르는 곳에서
         webix.ajax().post('/delete_process', {id: "${id}"})
                             .then((result) => { location.href='/' })
-        으로 index 페이지로 이동하는 걸 구현함
-        
-        2. 근데 location.href='/' 와 res.direct('/'); 둘 다 있어야 하나 봄.
-            둘 중에 하나가 없으면 계속 index 페이지로 이동 안 함
-        */
+        으로 index 화면으로 이동하는 걸 구현함 */
+});
+
+server.get('/delete_process', (req, res) => {
+
 });
 
 server.listen(PORT, () => {
