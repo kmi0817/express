@@ -10,7 +10,9 @@
     "jquery": "^3.6.0",
     "method-override": "^3.0.0",
     "uuid": "^8.3.2",
-    "webix-remote": "^1.0.0"
+    "webix-remote": "^1.0.0",
+    "xhr2": "^0.2.1",
+    "xmlhttprequest": "^1.8.0"
   },
   "devDependencies": {
     "nodemon": "^2.0.11"

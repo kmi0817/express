@@ -1,7 +1,7 @@
 import express from 'express';
 import bodyParser from 'body-parser';
 
-import { deleteMovie, getIndex, getMovie, editMovie, editView } from './controller/server.js';
+import { deleteMovie, getIndex, getMovies, getMovie, editMovie, editView } from './controller/server.js';
 
 const server = express(); // express server 생성
 const PORT = 3000;
@@ -13,6 +13,7 @@ server.use(bodyParser.json()); // server에선 모두 JSON 데이터를 사용�
 
 server.get('/', getIndex);
 
+server.get('/movies', getMovies);
 server.get('/movies/:id', getMovie);
 
 server.post('/delete_process', deleteMovie);

@@ -1,13 +1,19 @@
 import fs from 'fs';
 import { v4 as uuidv4 } from 'uuid';
+import XMLHttpRequest from 'xhr2';
+
+
+// let data = []
+
 
 function HTML(body, func) {
     return `
     <!doctype HTML>
     <html>
         <head>
-            <title>TEST</title>
             <meta charset='utf-8'>
+            <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+            <title>TEST</title>
             <link rel="stylesheet" href="http://cdn.webix.com/edge/webix.css" type="text/css">
             <script src="//cdn.webix.com/edge/webix.js" type="text/javascript"></script>
         
@@ -70,7 +76,7 @@ function LIST(movielist) {
     return list;
 }
 
-function MOVIE_TABLE(id, title, director, release_date, description) {
+function MOVIE_DISPLAY(id, title, director, release_date, description) {
     const table = `
     rows: [
         {
@@ -133,32 +139,70 @@ function MOVIE_TABLE(id, title, director, release_date, description) {
     return table
 }
 
+function getData() {
+    let data = []
+    
+    const movielist = fs.readdirSync('movies');
+    // console.log(movielist);
+
+    movielist.forEach((movie_id) => {
+        var element = fs.readFileSync(`movies/${movie_id}`, 'utf8');
+        element = JSON.parse(element);
+        // console.log(element);
+        data.push(element);
+    });
+    return data;
+}
+
+function TEMP() {
+    return `
+    view: 'datatable',
+    select: true,
+    id: 'table',
+    url: 'http://localhost:3000/movies',
+    columns: [
+        {id: 'title', header: '제목', adjust: true},
+        {id: 'director', header: '감독', adjust: true},
+        {id: 'release_date', header: '개봉년도', adjust: true},
+        {id: 'description', header: '내용', fillspace: true,}
+    ]
+    `
+}
+
+function CONTAINER(id) {
+    const request = new XMLHttpRequest();
+    request.open('GET', `https://localhost:3000/${id}`);
+    request.onload = function() {
+        const data = JSON(request.response);
+        console.log(data);
+        return data;
+    }
+}
+
 export const getIndex = (req, res) => {
-    fs.readdir('movies', (err, movielist) => {
-        if (err) throw err;
-        else {
-            const list = LIST(movielist);
-            
-            const body = `
-            rows: [
-                {${list}},
+    const table = TEMP();
+    const body = `
+    rows: [
+        {${table}},
+        {
+            view: 'toolbar', elements: [
                 {
-                    view: 'toolbar', elements: [
-                        {
-                            view: 'button', value: '추가',
-                            click: function() {
-                                location.href='/edit';
-                            }
-                        }
-                    ]
+                    view: 'button', value: '추가',
+                    click: function() {
+                        location.href='/edit';
+                    }
                 }
             ]
-            `;
-            const template = HTML(body, ''); // no function part
-
-            res.send(template);
         }
-    });
+    ]
+    `;
+    const template = HTML(body, '');
+    res.send(template);
+}
+
+export const getMovies = (req, res) => {
+    let data = getData();
+    res.send(data);
 }
 
 export const getMovie = (req, res) => {
@@ -168,7 +212,7 @@ export const getMovie = (req, res) => {
         fs.readFile(`movies/${id}`, 'utf8', (err, movie) => {
             movie = JSON.parse(movie);
 
-            const body = MOVIE_TABLE(movie.id, movie.title, movie.director, movie.release_date, movie.description);
+            const body = MOVIE_DISPLAY(movie.id, movie.title, movie.director, movie.release_date, movie.description);
 
             var template = HTML(body, ''); // no function part
 
