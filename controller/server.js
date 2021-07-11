@@ -1,12 +1,13 @@
 import fs from 'fs';
 import { v4 as uuidv4 } from 'uuid';
-import { HTML, INDEX, MOVIE_DISPLAY, EDIT, EDIT_FUNC } from '../lib/template.js';
+import { HTML, INDEX, INDEX_FUNC, MOVIE_DISPLAY, EDIT, EDIT_FUNC } from '../lib/template.js';
 
 /* 클라이언트 상에서 사용할 데이터 이름: myData */
 
 export const getIndex = (req, res) => {
     const body = INDEX();
-    const template = HTML(body, '');
+    const func = INDEX_FUNC();
+    const template = HTML(body, func);
     res.send(template);
 }
 
